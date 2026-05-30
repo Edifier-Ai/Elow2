@@ -25,6 +25,8 @@ targets:
       path: WhiteBrew/Info.plist
       properties:
         CFBundleDisplayName: White Brew
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
@@ -40,3 +42,15 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: WhiteBrew
+schemes:
+  WhiteBrew:
+    build:
+      targets:
+        WhiteBrew: all
+    run:
+      config: Debug
+      storeKitConfiguration: WhiteBrew.storekit
+    test:
+      config: Debug
+      targets:
+        - WhiteBrewTests

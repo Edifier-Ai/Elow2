@@ -4,6 +4,7 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 **/xcuserdata/
+/WhiteBrew.xcodeproj/
 build/
 .build/
 .swiftpm/
@@ -14,6 +15,7 @@ backend/node_modules/
 /.env.*.local
 backend/.env
 backend/.env.local
+backend/.env.*.local
 backend/prisma/dev.db
 backend/coverage/
 dist/
