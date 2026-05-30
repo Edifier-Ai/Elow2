@@ -29,6 +29,13 @@ struct BrewTheme: Identifiable, Hashable {
     let surfaceDepth: Double
 }
 
+struct ShareCardTemplate: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let description: String
+    let isPremium: Bool
+}
+
 enum MembershipState: Equatable {
     case free
     case annual(expiresAt: Date?)

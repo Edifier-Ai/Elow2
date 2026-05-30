@@ -160,10 +160,9 @@ struct CabinetView: View {
     private var shareTemplates: some View {
         claySection("Share Cards") {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ShareTemplateTile(title: "Daily Cup", symbol: "sun.max.fill", isPremium: false)
-                ShareTemplateTile(title: "Taste Notes", symbol: "text.bubble.fill", isPremium: false)
-                ShareTemplateTile(title: "Weekly Stack", symbol: "square.stack.3d.up.fill", isPremium: true)
-                ShareTemplateTile(title: "Gallery Render", symbol: "camera.fill", isPremium: true)
+                ForEach(PreviewData.shareCardTemplates) { template in
+                    ShareTemplateTile(template: template)
+                }
             }
         }
     }
@@ -190,9 +189,7 @@ struct CabinetView: View {
 }
 
 private struct ShareTemplateTile: View {
-    let title: String
-    let symbol: String
-    let isPremium: Bool
+    let template: ShareCardTemplate
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -206,7 +203,7 @@ private struct ShareTemplateTile: View {
                             .foregroundStyle(ClayTheme.text)
                     )
 
-                if isPremium {
+                if template.isPremium {
                     Text("Premium")
                         .font(.caption2.bold())
                         .foregroundStyle(.white)
@@ -217,9 +214,27 @@ private struct ShareTemplateTile: View {
                 }
             }
 
-            Text(title)
+            Text(template.name)
                 .font(.subheadline.bold())
                 .foregroundStyle(ClayTheme.text)
+
+            Text(template.description)
+                .font(.caption)
+                .foregroundStyle(ClayTheme.secondaryText)
+                .lineLimit(2)
+        }
+    }
+
+    private var symbol: String {
+        switch template.id {
+        case "daily-cup":
+            "sun.max.fill"
+        case "taste-notes":
+            "text.bubble.fill"
+        case "weekly-stack":
+            "square.stack.3d.up.fill"
+        default:
+            "camera.fill"
         }
     }
 }

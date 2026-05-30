@@ -19,6 +19,13 @@ enum PreviewData {
         .init(id: "model-room", name: "Model Room", isPremium: true, lightingPreset: "ambient-grid", surfaceDepth: 1.2)
     ]
 
+    static let shareCardTemplates: [ShareCardTemplate] = [
+        .init(id: "daily-cup", name: "Daily Cup", description: "Single drink card with today's key details.", isPremium: false),
+        .init(id: "taste-notes", name: "Taste Notes", description: "Compact flavor and mood summary.", isPremium: false),
+        .init(id: "weekly-stack", name: "Weekly Stack", description: "A weekly collection layout for multiple drinks.", isPremium: true),
+        .init(id: "gallery-render", name: "Gallery Render", description: "Studio-style white clay card presentation.", isPremium: true)
+    ]
+
     static func records(now: Date = .now) -> [DrinkRecord] {
         [
             .init(category: .coffee, name: "Morning Latte", style: "Latte", recordedAt: now.addingTimeInterval(-3600), price: 32, rating: 5, caffeineMG: 86, sugarLevel: .low, beanOrBase: "Ethiopia", temperature: .hot, sizeML: 300, mood: "Focused", tags: ["milk", "morning"], note: "Soft and balanced.", stickerID: "foam-01"),
