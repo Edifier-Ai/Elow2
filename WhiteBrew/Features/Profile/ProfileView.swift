@@ -4,7 +4,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @Query(sort: \DrinkRecord.updatedAt, order: .reverse) private var records: [DrinkRecord]
-    @State private var purchaseManager = PurchaseManager()
+    @Environment(PurchaseManager.self) private var purchaseManager
 
     private var pendingCount: Int {
         records.filter { $0.syncState == .pendingUpload }.count
@@ -26,10 +26,6 @@ struct ProfileView: View {
                 .padding(20)
             }
             .background(ClayTheme.background.ignoresSafeArea())
-            .task {
-                await purchaseManager.refreshEntitlements()
-                await purchaseManager.loadProducts()
-            }
         }
     }
 
@@ -65,7 +61,7 @@ struct ProfileView: View {
                 .padding(.vertical, 6)
             }
 
-            if purchaseManager.products.isEmpty {
+            if purchaseManager.products.isEmpty && !purchaseManager.isLoading {
                 settingsRow(symbol: "sparkles", title: "Premium plans", subtitle: "Products unavailable")
             } else {
                 ForEach(purchaseManager.products) { product in
@@ -147,7 +143,9 @@ struct ProfileView: View {
     }
 
     private func productRow(_ product: Product) -> some View {
-        HStack(spacing: 12) {
+        let purchaseState = purchaseManager.purchaseState(for: product.id)
+
+        return HStack(spacing: 12) {
             Image(systemName: product.id == PurchaseManager.lifetimeProductID ? "infinity" : "calendar.badge.clock")
                 .font(.headline)
                 .foregroundStyle(ClayTheme.text)
@@ -166,15 +164,41 @@ struct ProfileView: View {
 
             Spacer(minLength: 12)
 
-            ClayButton(product.displayPrice, systemImage: "cart") {
-                Task {
-                    await purchaseManager.purchase(product)
+            switch purchaseState {
+            case .purchasable:
+                ClayButton(product.displayPrice, systemImage: "cart") {
+                    Task {
+                        await purchaseManager.purchase(product)
+                    }
                 }
+                .disabled(purchaseManager.isLoading)
+            case .current, .active, .unavailable:
+                Text(statusLabel(for: purchaseState))
+                    .font(.caption.bold())
+                    .foregroundStyle(ClayTheme.text)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(
+                        Capsule()
+                            .fill(.white.opacity(0.78))
+                    )
             }
-            .disabled(purchaseManager.isLoading)
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
+    }
+
+    private func statusLabel(for state: PurchaseProductState) -> String {
+        switch state {
+        case .purchasable:
+            ""
+        case .current:
+            "Current"
+        case .active:
+            "Active"
+        case .unavailable:
+            "Unavailable"
+        }
     }
 
     private var membershipSubtitle: String {

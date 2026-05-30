@@ -7,6 +7,13 @@ struct PurchaseEntitlement: Equatable, Sendable {
     let expirationDate: Date?
 }
 
+enum PurchaseProductState: Equatable {
+    case purchasable
+    case current
+    case active
+    case unavailable
+}
+
 private enum PurchaseManagerError: LocalizedError {
     case failedVerification
 
@@ -30,6 +37,30 @@ final class PurchaseManager {
     var membershipState: MembershipState = .free
     var isLoading = false
     var errorMessage: String?
+
+    @ObservationIgnored
+    private var transactionUpdatesTask: Task<Void, Never>?
+
+    deinit {
+        transactionUpdatesTask?.cancel()
+    }
+
+    func startObservingTransactions() {
+        guard transactionUpdatesTask == nil else {
+            return
+        }
+
+        transactionUpdatesTask = Task { [weak self] in
+            for await result in Transaction.updates {
+                await self?.handleTransactionUpdate(result)
+            }
+        }
+    }
+
+    func stopObservingTransactions() {
+        transactionUpdatesTask?.cancel()
+        transactionUpdatesTask = nil
+    }
 
     func loadProducts() async {
         isLoading = true
@@ -142,6 +173,31 @@ final class PurchaseManager {
         return .free
     }
 
+    nonisolated static func purchaseState(
+        for productID: String,
+        membershipState: MembershipState,
+        asOf date: Date = .now
+    ) -> PurchaseProductState {
+        switch productID {
+        case lifetimeProductID:
+            if case .lifetime = membershipState {
+                return .current
+            }
+            return .purchasable
+        case annualProductID:
+            if case .lifetime = membershipState {
+                return .active
+            }
+            return membershipState.isMember(asOf: date) ? .current : .purchasable
+        default:
+            return .unavailable
+        }
+    }
+
+    func purchaseState(for productID: String, asOf date: Date = .now) -> PurchaseProductState {
+        Self.purchaseState(for: productID, membershipState: membershipState, asOf: date)
+    }
+
     private func updateEntitlements() async {
         var entitlements: [PurchaseEntitlement] = []
 
@@ -162,6 +218,18 @@ final class PurchaseManager {
         }
 
         membershipState = Self.membershipState(for: entitlements)
+    }
+
+    private func handleTransactionUpdate(_ result: VerificationResult<Transaction>) async {
+        do {
+            let transaction = try checkVerified(result)
+            await updateEntitlements()
+            await transaction.finish()
+        } catch let error as PurchaseManagerError {
+            errorMessage = error.localizedDescription
+        } catch {
+            errorMessage = "We could not verify your purchases. Please try restoring purchases."
+        }
     }
 
     nonisolated private static func sortIndex(for productID: String) -> Int {

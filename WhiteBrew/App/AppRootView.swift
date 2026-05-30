@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AppRootView: View {
     @State private var selectedTab: AppTab = .today
+    @State private var purchaseManager = PurchaseManager()
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -24,6 +25,15 @@ struct AppRootView: View {
             ProfileView()
                 .tabItem { Label(AppTab.profile.title, systemImage: AppTab.profile.symbol) }
                 .tag(AppTab.profile)
+        }
+        .environment(purchaseManager)
+        .task {
+            purchaseManager.startObservingTransactions()
+            await purchaseManager.refreshEntitlements()
+            await purchaseManager.loadProducts()
+        }
+        .onDisappear {
+            purchaseManager.stopObservingTransactions()
         }
     }
 }
