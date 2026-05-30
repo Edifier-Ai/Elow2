@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct RecordsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -9,6 +10,8 @@ struct RecordsView: View {
     @State private var editorSheet: RecordEditorSheet?
     @State private var pendingDeleteRecord: DrinkRecord?
     @State private var deleteErrorMessage: String?
+    @State private var sharePayload: SharePayload?
+    @State private var shareErrorMessage: String?
 
     private var visibleRecords: [DrinkRecord] {
         records
@@ -35,6 +38,9 @@ struct RecordsView: View {
                     EditDrinkView(record: record)
                 }
             }
+            .sheet(item: $sharePayload) { payload in
+                ActivityShareSheet(activityItems: [payload.image])
+            }
             .confirmationDialog(
                 "Delete record?",
                 isPresented: isConfirmingDelete,
@@ -53,6 +59,11 @@ struct RecordsView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(deleteErrorMessage ?? "")
+            }
+            .alert("Could not create share card", isPresented: shareErrorBinding) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(shareErrorMessage ?? "")
             }
         }
     }
@@ -114,6 +125,8 @@ struct RecordsView: View {
                 ForEach(visibleRecords) { record in
                     RecordTimelineRow(record: record) {
                         editorSheet = .edit(record)
+                    } onShare: {
+                        share(record)
                     } onDelete: {
                         pendingDeleteRecord = record
                     }
@@ -133,6 +146,13 @@ struct RecordsView: View {
         Binding(
             get: { deleteErrorMessage != nil },
             set: { if !$0 { deleteErrorMessage = nil } }
+        )
+    }
+
+    private var shareErrorBinding: Binding<Bool> {
+        Binding(
+            get: { shareErrorMessage != nil },
+            set: { if !$0 { shareErrorMessage = nil } }
         )
     }
 
@@ -164,6 +184,15 @@ struct RecordsView: View {
         }
     }
 
+    private func share(_ record: DrinkRecord) {
+        guard let image = ShareCardRenderer.image(for: record) else {
+            shareErrorMessage = "Try again after reopening this record."
+            return
+        }
+
+        sharePayload = SharePayload(image: image)
+    }
+
     private func delete(_ record: DrinkRecord) throws {
         let now = Date.now
 
@@ -177,6 +206,21 @@ struct RecordsView: View {
 
         try modelContext.save()
     }
+}
+
+private struct SharePayload: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
+private struct ActivityShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 private enum RecordEditorSheet: Identifiable {
@@ -196,6 +240,7 @@ private enum RecordEditorSheet: Identifiable {
 private struct RecordTimelineRow: View {
     let record: DrinkRecord
     let onEdit: () -> Void
+    let onShare: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
@@ -234,6 +279,15 @@ private struct RecordTimelineRow: View {
                     }
                 }
                 .buttonStyle(.plain)
+
+                Button(action: onShare) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.headline)
+                        .foregroundStyle(ClayTheme.text.opacity(0.78))
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Share \(record.name)")
 
                 Button(role: .destructive, action: onDelete) {
                     Image(systemName: "trash")
