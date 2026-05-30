@@ -43,6 +43,8 @@ final class StatsEngineTests: XCTestCase {
 
         XCTAssertEqual(fetchedRecords.count, 3)
         XCTAssertEqual(fetchedClampedRecord.rating, 5)
+        fetchedClampedRecord.rating = 99
+        XCTAssertEqual(fetchedClampedRecord.rating, 5)
         XCTAssertEqual(morningLatte.category, .coffee)
         XCTAssertEqual(morningLatte.sugarLevel, .low)
         XCTAssertEqual(morningLatte.temperature, .hot)
@@ -60,5 +62,14 @@ final class StatsEngineTests: XCTestCase {
         XCTAssertEqual(fetchedClampedRecord.sugarLevelRaw, SugarLevel.regular.rawValue)
         XCTAssertEqual(fetchedClampedRecord.temperatureRaw, DrinkTemperature.hot.rawValue)
         XCTAssertEqual(fetchedClampedRecord.syncStateRaw, SyncState.synced.rawValue)
+    }
+
+    func testMembershipStateRespectsAnnualExpiration() {
+        let now = Date(timeIntervalSinceReferenceDate: 800_000_000)
+
+        XCTAssertFalse(MembershipState.free.isMember(asOf: now))
+        XCTAssertTrue(MembershipState.lifetime.isMember(asOf: now))
+        XCTAssertTrue(MembershipState.annual(expiresAt: now.addingTimeInterval(3600)).isMember(asOf: now))
+        XCTAssertFalse(MembershipState.annual(expiresAt: now.addingTimeInterval(-3600)).isMember(asOf: now))
     }
 }

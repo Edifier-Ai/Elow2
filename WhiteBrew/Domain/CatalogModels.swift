@@ -35,10 +35,16 @@ enum MembershipState: Equatable {
     case lifetime
 
     var isMember: Bool {
+        isMember(asOf: .now)
+    }
+
+    func isMember(asOf date: Date) -> Bool {
         switch self {
         case .free:
             false
-        case .annual, .lifetime:
+        case .annual(let expiresAt):
+            expiresAt.map { $0 > date } ?? true
+        case .lifetime:
             true
         }
     }

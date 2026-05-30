@@ -41,7 +41,7 @@ final class DrinkRecord {
     var style: String
     var recordedAt: Date
     var price: Decimal
-    var rating: Int
+    var ratingValue: Int
     var caffeineMG: Int?
     var sugarLevelRaw: String
     var beanOrBase: String?
@@ -77,6 +77,11 @@ final class DrinkRecord {
         set { syncStateRaw = newValue.rawValue }
     }
 
+    var rating: Int {
+        get { Self.clampedRating(ratingValue) }
+        set { ratingValue = Self.clampedRating(newValue) }
+    }
+
     init(
         id: UUID = UUID(),
         remoteID: String? = nil,
@@ -108,7 +113,7 @@ final class DrinkRecord {
         self.style = style
         self.recordedAt = recordedAt
         self.price = price
-        self.rating = min(max(rating, 1), 5)
+        self.ratingValue = Self.clampedRating(rating)
         self.caffeineMG = caffeineMG
         self.sugarLevelRaw = sugarLevel.rawValue
         self.beanOrBase = beanOrBase
@@ -123,5 +128,9 @@ final class DrinkRecord {
         self.deletedAt = deletedAt
         self.syncStateRaw = syncState.rawValue
         self.lastSyncedAt = lastSyncedAt
+    }
+
+    private static func clampedRating(_ rating: Int) -> Int {
+        min(max(rating, 1), 5)
     }
 }
