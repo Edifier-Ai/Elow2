@@ -7,6 +7,8 @@ struct RecordsView: View {
 
     @State private var searchText = ""
     @State private var editorSheet: RecordEditorSheet?
+    @State private var pendingDeleteRecord: DrinkRecord?
+    @State private var deleteErrorMessage: String?
 
     private var visibleRecords: [DrinkRecord] {
         records
@@ -32,6 +34,25 @@ struct RecordsView: View {
                 case .edit(let record):
                     EditDrinkView(record: record)
                 }
+            }
+            .confirmationDialog(
+                "Delete record?",
+                isPresented: isConfirmingDelete,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    confirmDelete()
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingDeleteRecord = nil
+                }
+            } message: {
+                Text(deleteConfirmationMessage)
+            }
+            .alert("Could not delete record", isPresented: deleteErrorBinding) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(deleteErrorMessage ?? "")
             }
         }
     }
@@ -94,10 +115,32 @@ struct RecordsView: View {
                     RecordTimelineRow(record: record) {
                         editorSheet = .edit(record)
                     } onDelete: {
-                        delete(record)
+                        pendingDeleteRecord = record
                     }
                 }
             }
+        }
+    }
+
+    private var isConfirmingDelete: Binding<Bool> {
+        Binding(
+            get: { pendingDeleteRecord != nil },
+            set: { if !$0 { pendingDeleteRecord = nil } }
+        )
+    }
+
+    private var deleteErrorBinding: Binding<Bool> {
+        Binding(
+            get: { deleteErrorMessage != nil },
+            set: { if !$0 { deleteErrorMessage = nil } }
+        )
+    }
+
+    private var deleteConfirmationMessage: String {
+        if let pendingDeleteRecord {
+            "Remove \(pendingDeleteRecord.name) from the visible timeline?"
+        } else {
+            "Remove this record from the visible timeline?"
         }
     }
 
@@ -110,16 +153,29 @@ struct RecordsView: View {
             || record.tags.contains { $0.lowercased().contains(term) }
     }
 
-    private func delete(_ record: DrinkRecord) {
+    private func confirmDelete() {
+        guard let record = pendingDeleteRecord else { return }
+        pendingDeleteRecord = nil
+
+        do {
+            try delete(record)
+        } catch {
+            deleteErrorMessage = error.localizedDescription
+        }
+    }
+
+    private func delete(_ record: DrinkRecord) throws {
+        let now = Date.now
+
         if record.remoteID == nil {
             modelContext.delete(record)
         } else {
-            record.deletedAt = .now
+            record.deletedAt = now
             record.syncState = .pendingUpload
-            record.updatedAt = .now
+            record.updatedAt = now
         }
 
-        try? modelContext.save()
+        try modelContext.save()
     }
 }
 

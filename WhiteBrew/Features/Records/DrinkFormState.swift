@@ -4,6 +4,9 @@ import SwiftData
 enum DrinkFormValidationError: LocalizedError, Equatable {
     case missingName
     case missingStyle
+    case invalidPrice
+    case invalidCaffeine
+    case invalidSize
 
     var errorDescription: String? {
         switch self {
@@ -11,6 +14,12 @@ enum DrinkFormValidationError: LocalizedError, Equatable {
             "Add a drink name before saving."
         case .missingStyle:
             "Add a style before saving."
+        case .invalidPrice:
+            "Enter a valid price or leave it empty."
+        case .invalidCaffeine:
+            "Enter caffeine as a whole number or leave it empty."
+        case .invalidSize:
+            "Enter size as a whole number or leave it empty."
         }
     }
 }
@@ -80,18 +89,22 @@ struct DrinkFormState {
         guard !cleanedName.isEmpty else { throw DrinkFormValidationError.missingName }
         guard !cleanedStyle.isEmpty else { throw DrinkFormValidationError.missingStyle }
 
+        let parsedPrice = try parsedPrice()
+        let parsedCaffeine = try parsedOptionalInt(from: caffeineText, error: .invalidCaffeine)
+        let parsedSize = try parsedOptionalInt(from: sizeText, error: .invalidSize)
+
         let target = record ?? DrinkRecord(
             category: category,
             name: cleanedName,
             style: cleanedStyle,
             recordedAt: recordedAt,
-            price: parsedDecimal(from: priceText),
+            price: parsedPrice,
             rating: rating,
-            caffeineMG: parsedInt(from: caffeineText),
+            caffeineMG: parsedCaffeine,
             sugarLevel: sugarLevel,
             beanOrBase: beanOrBase.cleanedOptionalValue,
             temperature: temperature,
-            sizeML: parsedInt(from: sizeText),
+            sizeML: parsedSize,
             mood: mood.cleanedOptionalValue,
             tags: parsedTags,
             note: note.cleanedRequiredValue,
@@ -109,13 +122,13 @@ struct DrinkFormState {
         target.name = cleanedName
         target.style = cleanedStyle
         target.recordedAt = recordedAt
-        target.price = parsedDecimal(from: priceText)
+        target.price = parsedPrice
         target.rating = rating
-        target.caffeineMG = parsedInt(from: caffeineText)
+        target.caffeineMG = parsedCaffeine
         target.sugarLevel = sugarLevel
         target.beanOrBase = beanOrBase.cleanedOptionalValue
         target.temperature = temperature
-        target.sizeML = parsedInt(from: sizeText)
+        target.sizeML = parsedSize
         target.mood = mood.cleanedOptionalValue
         target.tags = parsedTags
         target.note = note.cleanedRequiredValue
@@ -136,14 +149,30 @@ struct DrinkFormState {
             .filter { seen.insert($0.lowercased()).inserted }
     }
 
-    private func parsedDecimal(from text: String) -> Decimal {
-        Decimal(string: text.cleanedRequiredValue.replacingOccurrences(of: ",", with: ".")) ?? 0
+    private func parsedPrice() throws -> Decimal {
+        let cleaned = priceText.cleanedRequiredValue
+        guard !cleaned.isEmpty else { return 0 }
+
+        let normalized = cleaned.replacingOccurrences(of: ",", with: ".")
+        let pricePattern = #"^[0-9]+(\.[0-9]+)?$"#
+
+        guard normalized.range(of: pricePattern, options: .regularExpression) != nil,
+              let price = Decimal(string: normalized) else {
+            throw DrinkFormValidationError.invalidPrice
+        }
+
+        return price
     }
 
-    private func parsedInt(from text: String) -> Int? {
+    private func parsedOptionalInt(from text: String, error: DrinkFormValidationError) throws -> Int? {
         let cleaned = text.cleanedRequiredValue
         guard !cleaned.isEmpty else { return nil }
-        return Int(cleaned)
+
+        guard let value = Int(cleaned) else {
+            throw error
+        }
+
+        return value
     }
 }
 

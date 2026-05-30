@@ -106,6 +106,50 @@ final class DrinkFormStateTests: XCTestCase {
         }
     }
 
+    func testSaveRejectsMalformedPrice() throws {
+        let context = try makeContext()
+        var form = validForm()
+        form.priceText = "12abc"
+
+        XCTAssertThrowsError(try form.save(record: nil, in: context, now: savedDate)) { error in
+            XCTAssertEqual(error as? DrinkFormValidationError, .invalidPrice)
+        }
+    }
+
+    func testSaveRejectsMalformedCaffeine() throws {
+        let context = try makeContext()
+        var form = validForm()
+        form.caffeineText = "80mg"
+
+        XCTAssertThrowsError(try form.save(record: nil, in: context, now: savedDate)) { error in
+            XCTAssertEqual(error as? DrinkFormValidationError, .invalidCaffeine)
+        }
+    }
+
+    func testSaveRejectsMalformedSize() throws {
+        let context = try makeContext()
+        var form = validForm()
+        form.sizeText = "large"
+
+        XCTAssertThrowsError(try form.save(record: nil, in: context, now: savedDate)) { error in
+            XCTAssertEqual(error as? DrinkFormValidationError, .invalidSize)
+        }
+    }
+
+    func testSaveAllowsEmptyOptionalNumericFields() throws {
+        let context = try makeContext()
+        var form = validForm()
+        form.priceText = ""
+        form.caffeineText = ""
+        form.sizeText = ""
+
+        let saved = try form.save(record: nil, in: context, now: savedDate)
+
+        XCTAssertEqual(saved.price, 0)
+        XCTAssertNil(saved.caffeineMG)
+        XCTAssertNil(saved.sizeML)
+    }
+
     private var fixedDate: Date {
         Date(timeIntervalSinceReferenceDate: 800_000_000)
     }
@@ -119,5 +163,15 @@ final class DrinkFormStateTests: XCTestCase {
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [configuration])
         return ModelContext(container)
+    }
+
+    private func validForm() -> DrinkFormState {
+        var form = DrinkFormState(now: fixedDate)
+        form.name = "Latte"
+        form.style = "Latte"
+        form.priceText = "32"
+        form.caffeineText = "86"
+        form.sizeText = "300"
+        return form
     }
 }
