@@ -19,8 +19,10 @@ enum PreviewData {
         .init(id: "model-room", name: "Model Room", isPremium: true, lightingPreset: "ambient-grid", surfaceDepth: 1.2)
     ]
 
-    static let records: [DrinkRecord] = [
-        .init(category: .coffee, name: "Morning Latte", style: "Latte", recordedAt: .now.addingTimeInterval(-3600), price: 32, rating: 5, caffeineMG: 86, sugarLevel: .low, beanOrBase: "Ethiopia", temperature: .hot, sizeML: 300, mood: "Focused", tags: ["milk", "morning"], note: "Soft and balanced.", stickerID: "foam-01"),
-        .init(category: .milkTea, name: "Oolong Milk Tea", style: "Milk Tea", recordedAt: .now.addingTimeInterval(-86400), price: 26, rating: 4, caffeineMG: 54, sugarLevel: .half, beanOrBase: "Oolong", temperature: .iced, sizeML: 500, mood: "Calm", tags: ["tea", "iced"], note: "Clean finish.", stickerID: "latte-arch")
-    ]
+    static func records(now: Date = .now) -> [DrinkRecord] {
+        [
+            .init(category: .coffee, name: "Morning Latte", style: "Latte", recordedAt: now.addingTimeInterval(-3600), price: 32, rating: 5, caffeineMG: 86, sugarLevel: .low, beanOrBase: "Ethiopia", temperature: .hot, sizeML: 300, mood: "Focused", tags: ["milk", "morning"], note: "Soft and balanced.", stickerID: "foam-01"),
+            .init(category: .milkTea, name: "Oolong Milk Tea", style: "Milk Tea", recordedAt: now.addingTimeInterval(-86400), price: 26, rating: 4, caffeineMG: 54, sugarLevel: .half, beanOrBase: "Oolong", temperature: .iced, sizeML: 500, mood: "Calm", tags: ["tea", "iced"], note: "Clean finish.", stickerID: "latte-arch")
+        ]
+    }
 }
