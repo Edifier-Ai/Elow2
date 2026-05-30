@@ -280,23 +280,27 @@ private struct RecordTimelineRow: View {
                 }
                 .buttonStyle(.plain)
 
-                Button(action: onShare) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.headline)
-                        .foregroundStyle(ClayTheme.text.opacity(0.78))
-                        .frame(width: 36, height: 36)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Share \(record.name)")
+                HStack(spacing: 4) {
+                    Button(action: onShare) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.headline)
+                            .foregroundStyle(ClayTheme.text.opacity(0.78))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Share \(record.name)")
 
-                Button(role: .destructive, action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.headline)
-                        .foregroundStyle(.red.opacity(0.75))
-                        .frame(width: 36, height: 36)
+                    Button(role: .destructive, action: onDelete) {
+                        Image(systemName: "trash")
+                            .font(.headline)
+                            .foregroundStyle(.red.opacity(0.75))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Delete \(record.name)")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Delete \(record.name)")
             }
         }
     }

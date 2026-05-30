@@ -15,7 +15,7 @@ struct ShareCardContent: Equatable {
         style = record.style
         ratingText = "\(record.rating)/5"
         caffeineText = "\(record.caffeineMG ?? 0) mg"
-        sugarText = record.sugarLevel.rawValue
+        sugarText = record.sugarLevel.displayName
         note = record.note
         brand = "White Brew"
     }
