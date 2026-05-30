@@ -25,6 +25,59 @@ final class StatsEngineTests: XCTestCase {
         XCTAssertEqual(summary.milkTeaCount, 1)
     }
 
+    func testSummaryIgnoresDeletedRecords() {
+        let calendar = Calendar(identifier: .gregorian)
+        let visibleDate = calendar.date(from: DateComponents(year: 2026, month: 5, day: 1, hour: 9))!
+        let deletedDate = calendar.date(from: DateComponents(year: 2026, month: 5, day: 2, hour: 15))!
+        let deletedAt = calendar.date(from: DateComponents(year: 2026, month: 5, day: 3, hour: 8))!
+        let records = [
+            DrinkRecord(category: .coffee, name: "Latte", style: "Latte", recordedAt: visibleDate, price: 30, rating: 5, caffeineMG: 90, sugarLevel: .low, beanOrBase: nil, temperature: .hot, sizeML: 300, mood: nil, tags: ["milk"], note: "", stickerID: nil),
+            DrinkRecord(category: .milkTea, name: "Deleted Tea", style: "Oolong", recordedAt: deletedDate, price: 20, rating: 4, caffeineMG: 40, sugarLevel: .half, beanOrBase: nil, temperature: .iced, sizeML: 500, mood: nil, tags: ["tea"], note: "", stickerID: nil, deletedAt: deletedAt),
+            DrinkRecord(category: .coffee, name: "Deleted Espresso", style: "Espresso", recordedAt: deletedDate, price: 18, rating: 3, caffeineMG: 120, sugarLevel: .none, beanOrBase: nil, temperature: .hot, sizeML: 60, mood: nil, tags: [], note: "", stickerID: nil, deletedAt: deletedAt)
+        ]
+
+        let summary = StatsEngine.summary(for: records, calendar: calendar)
+
+        XCTAssertEqual(summary.totalCups, 1)
+        XCTAssertEqual(summary.activeDays, 1)
+        XCTAssertEqual(summary.totalSpend, 30)
+        XCTAssertEqual(summary.averagePrice, 30)
+        XCTAssertEqual(summary.totalCaffeineMG, 90)
+        XCTAssertEqual(summary.preferredStyle, "Latte")
+        XCTAssertEqual(summary.mostCommonTimeWindow, "Morning")
+        XCTAssertEqual(summary.coffeeCount, 1)
+        XCTAssertEqual(summary.milkTeaCount, 0)
+    }
+
+    func testSummaryForEmptyInputReturnsZeroesAndNone() {
+        let summary = StatsEngine.summary(for: [], calendar: Calendar(identifier: .gregorian))
+
+        XCTAssertEqual(summary.totalCups, 0)
+        XCTAssertEqual(summary.activeDays, 0)
+        XCTAssertEqual(summary.totalSpend, 0)
+        XCTAssertEqual(summary.averagePrice, 0)
+        XCTAssertEqual(summary.totalCaffeineMG, 0)
+        XCTAssertEqual(summary.preferredStyle, "None")
+        XCTAssertEqual(summary.mostCommonTimeWindow, "None")
+        XCTAssertEqual(summary.coffeeCount, 0)
+        XCTAssertEqual(summary.milkTeaCount, 0)
+    }
+
+    func testSummaryTiesResolveDeterministically() {
+        let calendar = Calendar(identifier: .gregorian)
+        let morning = calendar.date(from: DateComponents(year: 2026, month: 5, day: 1, hour: 9))!
+        let afternoon = calendar.date(from: DateComponents(year: 2026, month: 5, day: 1, hour: 15))!
+        let records = [
+            DrinkRecord(category: .coffee, name: "Morning Coffee", style: "Mocha", recordedAt: morning, price: 28, rating: 4, caffeineMG: 80, sugarLevel: .low, beanOrBase: nil, temperature: .hot, sizeML: 250, mood: nil, tags: [], note: "", stickerID: nil),
+            DrinkRecord(category: .milkTea, name: "Afternoon Tea", style: "Americano", recordedAt: afternoon, price: 28, rating: 4, caffeineMG: 80, sugarLevel: .half, beanOrBase: nil, temperature: .iced, sizeML: 500, mood: nil, tags: [], note: "", stickerID: nil)
+        ]
+
+        let summary = StatsEngine.summary(for: records, calendar: calendar)
+
+        XCTAssertEqual(summary.preferredStyle, "Americano")
+        XCTAssertEqual(summary.mostCommonTimeWindow, "Afternoon")
+    }
+
     func testPreviewDrinkRecordsPersistAndRoundTripDomainAccessors() throws {
         let schema = Schema([DrinkRecord.self])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
