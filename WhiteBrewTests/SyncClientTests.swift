@@ -3,11 +3,16 @@ import XCTest
 
 final class SyncClientTests: XCTestCase {
     func testPushRequestEncodesChangedRecords() throws {
+        let id = UUID(uuidString: "9D912711-063A-4DCD-8236-D74242D69691")!
+        let recordedAt = Date(timeIntervalSince1970: 1_780_000_000)
+        let updatedAt = Date(timeIntervalSince1970: 1_780_000_500)
         let record = DrinkRecord(
+            id: id,
+            remoteID: "server-record-1",
             category: .coffee,
             name: "Flat White",
             style: "Flat White",
-            recordedAt: Date(timeIntervalSince1970: 1_780_000_000),
+            recordedAt: recordedAt,
             price: 28,
             rating: 5,
             caffeineMG: 80,
@@ -18,15 +23,31 @@ final class SyncClientTests: XCTestCase {
             mood: "Clear",
             tags: ["morning"],
             note: "Clean milk.",
-            stickerID: "foam-01"
+            stickerID: "foam-01",
+            updatedAt: updatedAt
         )
-        let request = SyncPushRequest(deviceID: "test-device", records: [.init(record: record)])
+        let request = SyncPushRequest(deviceId: "test-device", records: [.init(record: record)])
 
         let data = try JSONEncoder.whiteBrew.encode(request)
-        let json = String(decoding: data, as: UTF8.self)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let records = try XCTUnwrap(object["records"] as? [[String: Any]])
+        let payload = try XCTUnwrap(records.first)
 
-        XCTAssertTrue(json.contains("Flat White"))
-        XCTAssertTrue(json.contains("test-device"))
+        XCTAssertEqual(object["deviceId"] as? String, "test-device")
+        XCTAssertNil(object["deviceID"])
+        XCTAssertEqual(payload["clientId"] as? String, id.uuidString)
+        XCTAssertEqual(payload["id"] as? String, "server-record-1")
+        XCTAssertNil(payload["remoteID"])
+        XCTAssertNil(payload["caffeineMG"])
+        XCTAssertNil(payload["sizeML"])
+        XCTAssertNil(payload["stickerID"])
+        XCTAssertEqual(payload["name"] as? String, "Flat White")
+        XCTAssertEqual(payload["recordedAt"] as? String, ISO8601DateFormatter().string(from: recordedAt))
+        XCTAssertEqual(payload["price"] as? NSNumber, 28)
+        XCTAssertEqual(payload["caffeineMg"] as? NSNumber, 80)
+        XCTAssertEqual(payload["sizeMl"] as? NSNumber, 250)
+        XCTAssertEqual(payload["stickerId"] as? String, "foam-01")
+        XCTAssertEqual(payload["tags"] as? [String], ["morning"])
     }
 
     func testRecordPayloadMapsSyncFieldsAndTombstone() {
@@ -58,8 +79,8 @@ final class SyncClientTests: XCTestCase {
 
         let payload = SyncRecordPayload(record: record)
 
-        XCTAssertEqual(payload.id, id)
-        XCTAssertEqual(payload.remoteID, "remote-1")
+        XCTAssertEqual(payload.clientId, id)
+        XCTAssertEqual(payload.remoteId, "remote-1")
         XCTAssertEqual(payload.category, "milkTea")
         XCTAssertEqual(payload.recordedAt, recordedAt)
         XCTAssertEqual(payload.price, Decimal(string: "22.50"))
@@ -94,5 +115,49 @@ final class SyncClientTests: XCTestCase {
         let decoded = try JSONDecoder.whiteBrew.decode(SyncPullResponse.self, from: data)
 
         XCTAssertEqual(decoded, response)
+    }
+
+    func testPullResponseDecodesBackendShapedJSON() throws {
+        let json = """
+        {
+          "cursor": "cursor-3",
+          "records": [
+            {
+              "clientId": "9D912711-063A-4DCD-8236-D74242D69691",
+              "id": "server-record-2",
+              "category": "coffee",
+              "name": "Americano",
+              "style": "Long Black",
+              "recordedAt": "2026-05-30T12:00:00Z",
+              "price": 19.5,
+              "rating": 4,
+              "caffeineMg": 120,
+              "sugarLevel": "none",
+              "beanOrBase": "Blend",
+              "temperature": "hot",
+              "sizeMl": 300,
+              "mood": "Steady",
+              "tags": ["work", "morning"],
+              "note": "Bright.",
+              "stickerId": "spark-02",
+              "updatedAt": "2026-05-30T12:10:00Z",
+              "deletedAt": "2026-05-30T12:20:00Z"
+            }
+          ]
+        }
+        """
+
+        let response = try JSONDecoder.whiteBrew.decode(SyncPullResponse.self, from: Data(json.utf8))
+        let payload = try XCTUnwrap(response.records.first)
+
+        XCTAssertEqual(response.cursor, "cursor-3")
+        XCTAssertEqual(payload.clientId.uuidString, "9D912711-063A-4DCD-8236-D74242D69691")
+        XCTAssertEqual(payload.remoteId, "server-record-2")
+        XCTAssertEqual(payload.price, Decimal(string: "19.5"))
+        XCTAssertEqual(payload.caffeineMG, 120)
+        XCTAssertEqual(payload.sizeML, 300)
+        XCTAssertEqual(payload.tags, ["work", "morning"])
+        XCTAssertEqual(payload.stickerID, "spark-02")
+        XCTAssertEqual(payload.deletedAt, ISO8601DateFormatter().date(from: "2026-05-30T12:20:00Z"))
     }
 }

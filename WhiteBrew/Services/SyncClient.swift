@@ -1,8 +1,8 @@
 import Foundation
 
 struct SyncRecordPayload: Codable, Equatable {
-    let id: UUID
-    let remoteID: String?
+    let clientId: UUID
+    let remoteId: String?
     let category: String
     let name: String
     let style: String
@@ -21,9 +21,31 @@ struct SyncRecordPayload: Codable, Equatable {
     let updatedAt: Date
     let deletedAt: Date?
 
+    enum CodingKeys: String, CodingKey {
+        case clientId
+        case remoteId = "id"
+        case category
+        case name
+        case style
+        case recordedAt
+        case price
+        case rating
+        case caffeineMG = "caffeineMg"
+        case sugarLevel
+        case beanOrBase
+        case temperature
+        case sizeML = "sizeMl"
+        case mood
+        case tags
+        case note
+        case stickerID = "stickerId"
+        case updatedAt
+        case deletedAt
+    }
+
     init(record: DrinkRecord) {
-        self.id = record.id
-        self.remoteID = record.remoteID
+        self.clientId = record.id
+        self.remoteId = record.remoteID
         self.category = record.category.rawValue
         self.name = record.name
         self.style = record.style
@@ -45,13 +67,23 @@ struct SyncRecordPayload: Codable, Equatable {
 }
 
 struct SyncPushRequest: Codable, Equatable {
-    let deviceID: String
+    let deviceId: String
     let records: [SyncRecordPayload]
+
+    enum CodingKeys: String, CodingKey {
+        case deviceId
+        case records
+    }
 }
 
 struct SyncPullResponse: Codable, Equatable {
     let cursor: String
     let records: [SyncRecordPayload]
+
+    enum CodingKeys: String, CodingKey {
+        case cursor
+        case records
+    }
 }
 
 extension JSONEncoder {
