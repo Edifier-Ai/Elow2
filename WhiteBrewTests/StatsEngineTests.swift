@@ -3,6 +3,28 @@ import SwiftData
 @testable import WhiteBrew
 
 final class StatsEngineTests: XCTestCase {
+    func testSummaryCountsActiveDaysSpendAndCaffeine() {
+        let calendar = Calendar(identifier: .gregorian)
+        let first = calendar.date(from: DateComponents(year: 2026, month: 5, day: 1, hour: 9))!
+        let second = calendar.date(from: DateComponents(year: 2026, month: 5, day: 2, hour: 15))!
+        let records = [
+            DrinkRecord(category: .coffee, name: "Latte", style: "Latte", recordedAt: first, price: 30, rating: 5, caffeineMG: 90, sugarLevel: .low, beanOrBase: nil, temperature: .hot, sizeML: 300, mood: nil, tags: ["milk"], note: "", stickerID: nil),
+            DrinkRecord(category: .milkTea, name: "Milk Tea", style: "Oolong", recordedAt: second, price: 20, rating: 4, caffeineMG: 40, sugarLevel: .half, beanOrBase: nil, temperature: .iced, sizeML: 500, mood: nil, tags: ["tea"], note: "", stickerID: nil)
+        ]
+
+        let summary = StatsEngine.summary(for: records, calendar: calendar)
+
+        XCTAssertEqual(summary.totalCups, 2)
+        XCTAssertEqual(summary.activeDays, 2)
+        XCTAssertEqual(summary.totalSpend, 50)
+        XCTAssertEqual(summary.averagePrice, 25)
+        XCTAssertEqual(summary.totalCaffeineMG, 130)
+        XCTAssertEqual(summary.preferredStyle, "Latte")
+        XCTAssertEqual(summary.mostCommonTimeWindow, "Afternoon")
+        XCTAssertEqual(summary.coffeeCount, 1)
+        XCTAssertEqual(summary.milkTeaCount, 1)
+    }
+
     func testPreviewDrinkRecordsPersistAndRoundTripDomainAccessors() throws {
         let schema = Schema([DrinkRecord.self])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
