@@ -1,0 +1,25 @@
+{
+  "name": "white-brew-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.0.0",
+    "@prisma/client": "^6.8.0",
+    "fastify": "^5.3.3",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "prisma": "^6.8.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}
