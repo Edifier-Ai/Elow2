@@ -1,0 +1,34 @@
+{
+  "identifier" : "WhiteBrew",
+  "nonRenewingSubscriptions" : [
+    {
+      "displayPrice" : "149.00",
+      "familyShareable" : false,
+      "internalID" : "whitebrew.annual",
+      "localizations" : [
+        {
+          "description" : "Unlock full history stats, premium clay themes, sticker cabinet, cloud sync, and share card templates for one year.",
+          "displayName" : "Annual Member",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "whitebrew.annual",
+      "referenceName" : "Annual Member"
+    },
+    {
+      "displayPrice" : "298.00",
+      "familyShareable" : false,
+      "internalID" : "whitebrew.lifetime",
+      "localizations" : [
+        {
+          "description" : "Unlock all premium features permanently.",
+          "displayName" : "Lifetime Member",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "whitebrew.lifetime",
+      "referenceName" : "Lifetime Member"
+    }
+  ],
+  "settings" : {}
+}
