@@ -1,8 +1,10 @@
+import StoreKit
 import SwiftData
 import SwiftUI
 
 struct ProfileView: View {
     @Query(sort: \DrinkRecord.updatedAt, order: .reverse) private var records: [DrinkRecord]
+    @State private var purchaseManager = PurchaseManager()
 
     private var pendingCount: Int {
         records.filter { $0.syncState == .pendingUpload }.count
@@ -24,6 +26,10 @@ struct ProfileView: View {
                 .padding(20)
             }
             .background(ClayTheme.background.ignoresSafeArea())
+            .task {
+                await purchaseManager.refreshEntitlements()
+                await purchaseManager.loadProducts()
+            }
         }
     }
 
@@ -47,9 +53,39 @@ struct ProfileView: View {
 
     private var membership: some View {
         claySection("Membership") {
-            settingsRow(symbol: "crown", title: "Current plan", subtitle: "Free placeholder")
-            settingsRow(symbol: "sparkles", title: "Purchase premium", subtitle: "Coming in StoreKit task")
-            settingsRow(symbol: "arrow.clockwise", title: "Restore purchases", subtitle: "Coming in StoreKit task")
+            settingsRow(symbol: "crown", title: "Current plan", subtitle: membershipSubtitle)
+
+            if purchaseManager.isLoading {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("Loading membership")
+                        .font(.caption)
+                        .foregroundStyle(ClayTheme.secondaryText)
+                }
+                .padding(.vertical, 6)
+            }
+
+            if purchaseManager.products.isEmpty {
+                settingsRow(symbol: "sparkles", title: "Premium plans", subtitle: "Products unavailable")
+            } else {
+                ForEach(purchaseManager.products) { product in
+                    productRow(product)
+                }
+            }
+
+            ClayButton("Restore purchases", systemImage: "arrow.clockwise") {
+                Task {
+                    await purchaseManager.restorePurchases()
+                }
+            }
+            .disabled(purchaseManager.isLoading)
+
+            if let errorMessage = purchaseManager.errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding(.top, 2)
+            }
         }
     }
 
@@ -108,5 +144,51 @@ struct ProfileView: View {
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
+    }
+
+    private func productRow(_ product: Product) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: product.id == PurchaseManager.lifetimeProductID ? "infinity" : "calendar.badge.clock")
+                .font(.headline)
+                .foregroundStyle(ClayTheme.text)
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(.white.opacity(0.78)))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(product.displayName)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(ClayTheme.text)
+                Text(product.description)
+                    .font(.caption)
+                    .foregroundStyle(ClayTheme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 12)
+
+            ClayButton(product.displayPrice, systemImage: "cart") {
+                Task {
+                    await purchaseManager.purchase(product)
+                }
+            }
+            .disabled(purchaseManager.isLoading)
+        }
+        .padding(.vertical, 6)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var membershipSubtitle: String {
+        switch purchaseManager.membershipState {
+        case .free:
+            "Free plan"
+        case .annual(let expiresAt):
+            if let expiresAt {
+                "Annual member until \(expiresAt.formatted(date: .abbreviated, time: .omitted))"
+            } else {
+                "Annual member"
+            }
+        case .lifetime:
+            "Lifetime member"
+        }
     }
 }
