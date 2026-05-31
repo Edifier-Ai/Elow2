@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String?       @unique
+  appleSub     String?       @unique
+  displayName  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  records      DrinkRecord[]
+  entitlements Entitlement[]
+  cursors      SyncCursor[]
+}
+
+model DrinkRecord {
+  id          String    @id @default(cuid())
+  userId      String
+  clientId    String
+  deviceId    String
+  category    String
+  name        String
+  style       String
+  recordedAt  DateTime
+  price       Decimal
+  rating      Int
+  caffeineMg  Int?
+  sugarLevel  String
+  beanOrBase  String?
+  temperature String
+  sizeMl      Int?
+  mood        String?
+  tags        String[]
+  note        String
+  stickerId   String?
+  version     Int       @default(1)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, updatedAt])
+  @@unique([userId, clientId])
+}
+
+model Entitlement {
+  id                    String    @id @default(cuid())
+  userId                String
+  productId             String
+  type                  String
+  status                String
+  expiresAt             DateTime?
+  originalTransactionId String?
+  latestTransactionId   String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+}
+
+model SyncCursor {
+  id        String   @id @default(cuid())
+  userId    String
+  deviceId  String
+  cursor    String
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, deviceId])
+}
