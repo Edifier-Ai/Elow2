@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ClayCard<Content: View>: View {
     let content: Content
@@ -127,5 +128,70 @@ struct ClayMetricTile: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+enum DrinkPhotoPlaceholderSize {
+    case compact
+    case large
+}
+
+struct DrinkPhotoPlaceholder: View {
+    let recordName: String
+    let style: String
+    let size: DrinkPhotoPlaceholderSize
+
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.96, green: 0.91, blue: 0.80),
+                    Color(red: 0.73, green: 0.82, blue: 0.78),
+                    Color(red: 0.47, green: 0.55, blue: 0.62)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            Circle()
+                .fill(.white.opacity(0.22))
+                .frame(width: size == .large ? 190 : 62, height: size == .large ? 190 : 62)
+                .offset(x: size == .large ? 92 : 24, y: size == .large ? -76 : -22)
+
+            VStack(spacing: size == .large ? 14 : 4) {
+                Image(systemName: "cup.and.saucer.fill")
+                    .font(size == .large ? .system(size: 54, weight: .semibold) : .title3)
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 5)
+
+                if size == .large {
+                    Text(recordName.isEmpty ? "Coffee" : recordName)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Text(style.isEmpty ? "Tap to add a photo" : style)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.82))
+                        .lineLimit(1)
+                }
+            }
+            .padding(size == .large ? 18 : 6)
+        }
+    }
+}
+
+struct DrinkRecordPhoto: View {
+    let record: DrinkRecord
+    let size: DrinkPhotoPlaceholderSize
+
+    var body: some View {
+        if let photoData = record.photoData,
+           let image = UIImage(data: photoData) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            DrinkPhotoPlaceholder(recordName: record.name, style: record.style, size: size)
+        }
     }
 }

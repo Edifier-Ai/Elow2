@@ -20,6 +20,7 @@ final class DrinkFormStateTests: XCTestCase {
         form.tagsText = "tea, iced, tea"
         form.note = "  Clean finish.  "
         form.stickerID = "latte-arch"
+        form.photoData = Data([0x01, 0x02, 0x03])
 
         let saved = try form.save(record: nil, in: context, now: savedDate)
         try context.save()
@@ -38,6 +39,7 @@ final class DrinkFormStateTests: XCTestCase {
         XCTAssertEqual(saved.tags, ["tea", "iced"])
         XCTAssertEqual(saved.note, "Clean finish.")
         XCTAssertEqual(saved.stickerID, "latte-arch")
+        XCTAssertEqual(saved.photoData, Data([0x01, 0x02, 0x03]))
         XCTAssertEqual(saved.recordedAt, fixedDate)
         XCTAssertEqual(saved.createdAt, savedDate)
         XCTAssertEqual(saved.updatedAt, savedDate)
@@ -74,6 +76,7 @@ final class DrinkFormStateTests: XCTestCase {
         form.style = "White Coffee"
         form.priceText = "34"
         form.tagsText = "milk, smooth"
+        form.photoData = Data([0x04, 0x05])
 
         let saved = try form.save(record: record, in: context, now: savedDate)
 
@@ -82,6 +85,7 @@ final class DrinkFormStateTests: XCTestCase {
         XCTAssertEqual(record.style, "White Coffee")
         XCTAssertEqual(record.price, 34)
         XCTAssertEqual(record.tags, ["milk", "smooth"])
+        XCTAssertEqual(record.photoData, Data([0x04, 0x05]))
         XCTAssertEqual(record.createdAt, createdAt)
         XCTAssertEqual(record.updatedAt, savedDate)
         XCTAssertEqual(record.syncState, .pendingUpload)

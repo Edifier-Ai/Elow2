@@ -8,12 +8,13 @@ struct CabinetView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header
-                    stickerGrid
-                    characterShelf
                     themeSelector
                     shareTemplates
+                    stickerGrid
+                    characterShelf
                 }
                 .padding(20)
+                .padding(.bottom, 100)
             }
             .background(ClayTheme.background.ignoresSafeArea())
         }
@@ -22,10 +23,10 @@ struct CabinetView: View {
     private var header: some View {
         ClayCard {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Cabinet")
+                Text("丰富主题")
                     .font(.largeTitle.bold())
                     .foregroundStyle(ClayTheme.text)
-                Text("Your white clay stickers, figures, themes, and share-card starting points.")
+                Text("用颜色，定制你的咖啡美学。")
                     .font(.subheadline)
                     .foregroundStyle(ClayTheme.secondaryText)
             }
@@ -110,21 +111,37 @@ struct CabinetView: View {
     }
 
     private var themeSelector: some View {
-        claySection("Theme Selector") {
-            VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 14) {
+            ClayCard {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("把喜欢的每一杯留下")
+                        .font(.title2.bold())
+                        .foregroundStyle(ClayTheme.text)
+                    Text("主题色会同步作用到首页、趋势页和个人中心。")
+                        .font(.caption)
+                        .foregroundStyle(ClayTheme.secondaryText)
+
+                    HStack(spacing: 12) {
+                        SoftPreviewMetric(title: "总杯数", value: "126")
+                        SoftPreviewMetric(title: "本周", value: "12")
+                        SoftPreviewMetric(title: "评分", value: "4.8")
+                    }
+                }
+            }
+
+            Text("颜色主题")
+                .font(.headline)
+                .foregroundStyle(ClayTheme.text)
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(PreviewData.themes) { theme in
                     Button {
                         selectedThemeID = theme.id
                     } label: {
-                        HStack(spacing: 12) {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(theme.id == selectedThemeID ? ClayTheme.selected : ClayTheme.hairline)
-                                .frame(width: 44, height: 44)
-                                .overlay(
-                                    Circle()
-                                        .fill(.white.opacity(0.84))
-                                        .padding(10)
-                                )
+                        VStack(alignment: .leading, spacing: 12) {
+                            ThemeSwatchRow(theme: theme)
+                                .frame(height: 58)
+                                .background(ClayTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack(spacing: 6) {
@@ -135,20 +152,26 @@ struct CabinetView: View {
                                         premiumBadge
                                     }
                                 }
-                                Text("\(theme.lightingPreset), depth \(theme.surfaceDepth.formatted())")
+                                Text(theme.lightingPreset)
                                     .font(.caption)
                                     .foregroundStyle(ClayTheme.secondaryText)
                             }
 
-                            Spacer()
-
-                            Image(systemName: theme.id == selectedThemeID ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(ClayTheme.text)
+                            if theme.id == selectedThemeID {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(ClayTheme.accentSage)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                            }
                         }
-                        .padding(12)
+                        .frame(maxWidth: .infinity, minHeight: 136, alignment: .topLeading)
+                        .padding(14)
                         .background(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(.white.opacity(0.7))
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .fill(ClayTheme.paper)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .stroke(theme.id == selectedThemeID ? ClayTheme.accentSage : ClayTheme.hairline, lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
@@ -184,6 +207,55 @@ struct CabinetView: View {
                     .foregroundStyle(ClayTheme.text)
                 content()
             }
+        }
+    }
+}
+
+private struct SoftPreviewMetric: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(value)
+                .font(.headline.bold())
+                .foregroundStyle(ClayTheme.accentSage)
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(ClayTheme.secondaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(ClayTheme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+private struct ThemeSwatchRow: View {
+    let theme: BrewTheme
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Circle().fill(primaryColor)
+            Circle().fill(secondaryColor)
+            Circle().fill(Color(red: 0.86, green: 0.76, blue: 0.55))
+            Circle().fill(Color(red: 0.96, green: 0.86, blue: 0.52))
+        }
+        .padding(.horizontal, 14)
+    }
+
+    private var primaryColor: Color {
+        switch theme.id {
+        case "gallery-white": ClayTheme.accentCoffee
+        case "studio-clay": ClayTheme.accentSage
+        default: Color(red: 0.45, green: 0.55, blue: 0.72)
+        }
+    }
+
+    private var secondaryColor: Color {
+        switch theme.id {
+        case "gallery-white": Color(red: 0.70, green: 0.45, blue: 0.32)
+        case "studio-clay": Color(red: 0.70, green: 0.52, blue: 0.40)
+        default: Color(red: 0.72, green: 0.42, blue: 0.62)
         }
     }
 }

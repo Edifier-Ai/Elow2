@@ -7,6 +7,7 @@ struct ShareCardContent: Equatable {
     let ratingText: String
     let caffeineText: String
     let sugarText: String
+    let priceText: String
     let note: String
     let brand: String
 
@@ -16,6 +17,7 @@ struct ShareCardContent: Equatable {
         ratingText = "\(record.rating)/5"
         caffeineText = "\(record.caffeineMG ?? 0) mg"
         sugarText = record.sugarLevel.displayName
+        priceText = "¥\(record.price.plainString)"
         note = record.note
         brand = "White Brew"
     }
@@ -29,54 +31,66 @@ struct ShareCardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 28) {
-            Text(content.brand.uppercased())
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(ClayTheme.secondaryText)
-
-            Spacer(minLength: 120)
-
-            VStack(alignment: .leading, spacing: 18) {
-                Text(content.name)
-                    .font(.system(size: 76, weight: .bold, design: .rounded))
-                    .foregroundStyle(ClayTheme.text)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.72)
-
-                Text(content.style)
-                    .font(.system(size: 36, weight: .medium, design: .rounded))
+        VStack(alignment: .leading, spacing: 30) {
+            HStack {
+                Text(Date.now.formatted(date: .omitted, time: .shortened))
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .foregroundStyle(ClayTheme.accentSage)
+                Spacer()
+                Text(content.brand)
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
                     .foregroundStyle(ClayTheme.secondaryText)
             }
 
-            HStack(spacing: 16) {
-                ShareCardMetric(text: content.ratingText)
-                ShareCardMetric(text: content.caffeineText)
-                ShareCardMetric(text: content.sugarText)
+            DrinkRecordPhoto(record: record, size: .large)
+                .frame(width: 360, height: 300)
+                .clipShape(RoundedRectangle(cornerRadius: 54, style: .continuous))
+                .frame(maxWidth: .infinity)
+                .padding(.top, 18)
+
+            VStack(alignment: .leading, spacing: 18) {
+                Text("“ \(content.note.isEmpty ? "一杯日常" : content.note) ”")
+                    .font(.system(size: 54, weight: .bold, design: .rounded))
+                    .foregroundStyle(ClayTheme.text)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.68)
+
+                HStack(spacing: 16) {
+                    ShareCardMetric(text: content.style)
+                    ShareCardMetric(text: content.sugarText)
+                    ShareCardMetric(text: content.caffeineText)
+                }
             }
 
-            Text(content.note.isEmpty ? "No tasting note." : content.note)
-                .font(.system(size: 32, weight: .regular, design: .rounded))
-                .foregroundStyle(ClayTheme.secondaryText)
-                .lineSpacing(8)
-                .lineLimit(7)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
             Spacer()
+
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(content.priceText)
+                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .foregroundStyle(ClayTheme.accentSage)
+                    Text(content.name)
+                        .font(.system(size: 28, weight: .semibold, design: .rounded))
+                        .foregroundStyle(ClayTheme.secondaryText)
+                }
+
+                Spacer()
+
+                Text("\(record.rating)")
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .foregroundStyle(ClayTheme.accentSage)
+                    .frame(width: 96, height: 96)
+                    .background(Circle().stroke(ClayTheme.hairline, lineWidth: 4))
+            }
         }
-        .padding(64)
+        .padding(72)
         .frame(width: 900, height: 1200, alignment: .topLeading)
         .background(
             ZStack {
                 ClayTheme.background
 
                 RoundedRectangle(cornerRadius: 64, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [ClayTheme.raised, ClayTheme.surface],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(ClayTheme.paper)
                     .padding(42)
                     .modifier(ClayTheme.raisedShadow())
             }
@@ -89,7 +103,7 @@ private struct ShareCardMetric: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 30, weight: .bold, design: .rounded))
+            .font(.system(size: 26, weight: .bold, design: .rounded))
             .foregroundStyle(ClayTheme.text)
             .lineLimit(1)
             .minimumScaleFactor(0.72)

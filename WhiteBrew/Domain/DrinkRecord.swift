@@ -51,6 +51,7 @@ final class DrinkRecord {
     var tags: [String]
     var note: String
     var stickerID: String?
+    var photoData: Data?
     var createdAt: Date
     var updatedAt: Date
     var deletedAt: Date?
@@ -100,6 +101,7 @@ final class DrinkRecord {
         tags: [String],
         note: String,
         stickerID: String?,
+        photoData: Data? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         deletedAt: Date? = nil,
@@ -123,6 +125,7 @@ final class DrinkRecord {
         self.tags = tags
         self.note = note
         self.stickerID = stickerID
+        self.photoData = photoData
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.deletedAt = deletedAt

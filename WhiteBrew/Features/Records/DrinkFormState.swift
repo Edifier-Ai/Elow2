@@ -40,6 +40,7 @@ struct DrinkFormState {
     var tagsText: String
     var note: String
     var stickerID: String?
+    var photoData: Data?
 
     init(now: Date = .now) {
         category = .coffee
@@ -57,6 +58,7 @@ struct DrinkFormState {
         tagsText = ""
         note = ""
         stickerID = nil
+        photoData = nil
     }
 
     init(record: DrinkRecord?) {
@@ -79,6 +81,7 @@ struct DrinkFormState {
         tagsText = record.tags.joined(separator: ", ")
         note = record.note
         stickerID = record.stickerID
+        photoData = record.photoData
     }
 
     @discardableResult
@@ -109,6 +112,7 @@ struct DrinkFormState {
             tags: parsedTags,
             note: note.cleanedRequiredValue,
             stickerID: stickerID,
+            photoData: photoData,
             createdAt: now,
             updatedAt: now,
             syncState: .pendingUpload
@@ -133,6 +137,7 @@ struct DrinkFormState {
         target.tags = parsedTags
         target.note = note.cleanedRequiredValue
         target.stickerID = stickerID
+        target.photoData = photoData
         target.updatedAt = now
         target.deletedAt = nil
         target.syncState = .pendingUpload

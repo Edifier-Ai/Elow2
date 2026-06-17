@@ -6,6 +6,7 @@ xcuserdata/
 **/xcuserdata/
 /WhiteBrew.xcodeproj/
 build/
+build_output/
 .build/
 .swiftpm/
 node_modules/

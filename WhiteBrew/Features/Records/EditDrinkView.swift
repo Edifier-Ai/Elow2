@@ -1,5 +1,7 @@
 import SwiftData
 import SwiftUI
+import PhotosUI
+import UIKit
 
 struct EditDrinkView: View {
     @Environment(\.dismiss) private var dismiss
@@ -8,6 +10,7 @@ struct EditDrinkView: View {
     private let record: DrinkRecord?
     @State private var form: DrinkFormState
     @State private var validationMessage: String?
+    @State private var selectedPhotoItem: PhotosPickerItem?
 
     init(record: DrinkRecord?) {
         self.record = record
@@ -18,16 +21,7 @@ struct EditDrinkView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    ClayCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(record == nil ? "New Drink" : "Edit Drink")
-                                .font(.largeTitle.bold())
-                                .foregroundStyle(ClayTheme.text)
-                            Text("Capture the taste, cost, mood, and small details that make this cup useful later.")
-                                .font(.subheadline)
-                                .foregroundStyle(ClayTheme.secondaryText)
-                        }
-                    }
+                    photoHeader
 
                     claySection("Drink") {
                         Picker("Category", selection: $form.category) {
@@ -108,6 +102,9 @@ struct EditDrinkView: View {
             } message: {
                 Text(validationMessage ?? "")
             }
+            .task(id: selectedPhotoItem) {
+                await loadSelectedPhoto()
+            }
         }
     }
 
@@ -116,6 +113,43 @@ struct EditDrinkView: View {
             get: { validationMessage != nil },
             set: { if !$0 { validationMessage = nil } }
         )
+    }
+
+    private var photoHeader: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(record == nil ? "New cup" : "Edit cup")
+                .font(.largeTitle.bold())
+                .foregroundStyle(ClayTheme.text)
+
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                ZStack(alignment: .bottomLeading) {
+                    if let image = form.photoImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        DrinkPhotoPlaceholder(recordName: form.name, style: form.style, size: .large)
+                    }
+
+                    Label(form.photoData == nil ? "Add photo" : "Change photo", systemImage: "camera.fill")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(.black.opacity(0.45), in: Capsule())
+                        .padding(14)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 240)
+                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(.white.opacity(0.85), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 10)
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     private func claySection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -175,5 +209,27 @@ struct EditDrinkView: View {
         } catch {
             validationMessage = error.localizedDescription
         }
+    }
+
+    private func loadSelectedPhoto() async {
+        guard let selectedPhotoItem else { return }
+
+        do {
+            guard let data = try await selectedPhotoItem.loadTransferable(type: Data.self) else { return }
+            await MainActor.run {
+                form.photoData = data
+            }
+        } catch {
+            await MainActor.run {
+                validationMessage = "Could not load that photo."
+            }
+        }
+    }
+}
+
+extension DrinkFormState {
+    var photoImage: UIImage? {
+        guard let photoData else { return nil }
+        return UIImage(data: photoData)
     }
 }

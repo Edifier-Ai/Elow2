@@ -11,9 +11,9 @@ enum AppTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .today: "Today"
-        case .records: "Record"
-        case .stats: "Stats"
+        case .today: "Coffee"
+        case .records: "Diary"
+        case .stats: "Data"
         case .cabinet: "Cabinet"
         case .profile: "Me"
         }
@@ -21,9 +21,9 @@ enum AppTab: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .today: "cup.and.saucer"
-        case .records: "calendar"
-        case .stats: "chart.bar"
+        case .today: "cup.and.saucer.fill"
+        case .records: "face.smiling"
+        case .stats: "chart.bar.fill"
         case .cabinet: "square.grid.3x3"
         case .profile: "person"
         }

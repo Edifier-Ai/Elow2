@@ -8,6 +8,9 @@ enum ClayTheme {
     static let secondaryText = Color(red: 0.45, green: 0.45, blue: 0.40)
     static let hairline = Color(red: 0.88, green: 0.88, blue: 0.84)
     static let selected = Color(red: 0.16, green: 0.16, blue: 0.14)
+    static let accentSage = Color(red: 0.50, green: 0.63, blue: 0.55)
+    static let accentCoffee = Color(red: 0.54, green: 0.35, blue: 0.24)
+    static let paper = Color(red: 0.99, green: 0.98, blue: 0.94)
 
     static let cardRadius: CGFloat = 24
     static let controlRadius: CGFloat = 18
